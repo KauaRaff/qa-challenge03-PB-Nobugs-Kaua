@@ -10,12 +10,12 @@ Resource        variables.robot
 Setup suite
     [Documentation]        Configuração executada uma vez antes de todos os testes da suite
     Create Session    alias=serverest    url=${BASE_URL}    verify=True
-    Log To Console     Sessão HTTP criada com sucesso para ${BASE_URL}
+    Log     Sessão HTTP criada com sucesso para ${BASE_URL}
 
 Teardown suite
     [Documentation]        Limpeza executada após todos os testes da suite
     Delete All Sessions        
-    Log To Console        Todas as sessões foram encerradas
+    Log        Todas as sessões foram encerradas
 
 Validar status code
     [Documentation]        Valida se o status code da resposta é o esperado
@@ -48,3 +48,11 @@ Gerar Nome Aleatorio
     ${timestamp}=    Get Time    epoch
     ${nome}=    Set Variable    Usuario Teste ${timestamp}
     RETURN    ${nome}
+
+Setup Test
+    [Documentation]    Configuração executada antes de cada teste
+    Log To Console    \nIniciando teste: ${TEST_NAME}
+
+Teardown Test
+    [Documentation]    Limpeza executada após cada teste
+    Log To Console    Finalizando teste: ${TEST_NAME} - Status: ${TEST_STATUS}

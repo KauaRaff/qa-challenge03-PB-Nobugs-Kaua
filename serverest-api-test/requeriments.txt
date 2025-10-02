@@ -1,4 +1,18 @@
-robotframework==6.1.1
-robotframework-requests==0.9.5
-robotframework-jsonlibrary==0.5
+# Robot Framework
+robotframework==7.0.1
+
+# HTTP/API
+robotframework-requests==0.9.6
 requests==2.31.0
+
+# JSON 
+robotframework-jsonlibrary==0.5
+
+
+robotframework-pabot==2.18.0
+
+# Dependencies
+urllib3==2.1.0
+certifi==2023.11.17
+charset-normalizer==3.3.2
+idna==3.6
