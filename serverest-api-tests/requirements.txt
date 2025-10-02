@@ -1,0 +1,8 @@
+#para instalar o robot
+robotframework==7.0.1
+
+#para as libs
+robotframework-requests==0.9.6
+
+#libs py
+requests==2.31.0

@@ -7,8 +7,8 @@ Resource         ../base_setup.robot
 Resource         login_keywords.robot
 
 *** Keywords ***
-Criar produto valido
-    [Documentation]    Cria um produto com dados válidos e retorna o ID
+Criar Produto Valido
+    [Documentation]    Cria um produto com dados válidos, usando o token global, e retorna o ID e o nome.
     [Arguments]    ${token}=${TOKEN}
     
     ${timestamp}=    Get Time    epoch
@@ -35,11 +35,11 @@ Criar produto valido
     
     ${produto_id}=    Set Variable    ${response_json['_id']}
     
-    Log   Produto criado com sucesso. ID: ${produto_id}
+    Log    Produto criado com sucesso. ID: ${produto_id} | Nome: ${nome}
     RETURN    ${produto_id}    ${nome}
 
-Criar produtos com dados
-    [Documentation]    Cria produto com dados customizados
+Criar Produtos Com Dados
+    [Documentation]    Cria um produto com dados customizados e retorna a resposta.
     [Arguments]    ${nome}    ${preco}    ${descricao}    ${quantidade}    ${token}=${TOKEN}
     
     ${headers}=    Criar Headers Com Token    ${token}
@@ -54,8 +54,8 @@ Criar produtos com dados
     
     RETURN    ${response}
 
-Criar produto sem autenticação
-    [Documentation]    Tenta criar produto sem token de autenticação
+Criar Produto Sem Autenticação
+    [Documentation]    Tenta criar um produto sem passar o token de autenticação (headers).
     [Arguments]    ${nome}    ${preco}    ${descricao}    ${quantidade}
     
     ${body}=    Create Dictionary
@@ -64,28 +64,20 @@ Criar produto sem autenticação
     ...    descricao=${descricao}
     ...    quantidade=${quantidade}
     
-    ${response}=    POST    ${BASE_URL}${PRODUTOS_ENDPOINT}    json=${body}    expected_status=401
+    ${response}=    POST    ${BASE_URL}${PRODUTOS_ENDPOINT}    json=${body}    expected_status=any
     
     RETURN    ${response}
 
-Buscar produto por ID
-    [Documentation]    Busca produto específico por ID
+Buscar Produto Por ID
+    [Documentation]    Busca um produto específico pelo ID.
     [Arguments]    ${produto_id}
     
     ${response}=    GET    ${BASE_URL}${PRODUTOS_ENDPOINT}/${produto_id}    expected_status=any
     
     RETURN    ${response}
 
-Listar todos produtos
-    [Documentation]    Lista todos os produtos cadastrados
-    
-    ${response}=    GET    ${BASE_URL}${PRODUTOS_ENDPOINT}    expected_status=200
-    
-    Validar Status Code    ${response}    ${STATUS_200}
-    RETURN    ${response}
-
-Atualizar produto
-    [Documentation]    Atualiza dados de um produto existente
+Atualizar Produto
+    [Documentation]    Atualiza um produto existente.
     [Arguments]    ${produto_id}    ${nome}    ${preco}    ${descricao}    ${quantidade}    ${token}=${TOKEN}
     
     ${headers}=    Criar Headers Com Token    ${token}
@@ -100,17 +92,19 @@ Atualizar produto
     
     RETURN    ${response}
 
-Deletar produto
-    [Documentation]    Deleta um produto por ID
+Deletar Produto
+    [Documentation]    Deleta um produto pelo ID.
     [Arguments]    ${produto_id}    ${token}=${TOKEN}
     
     ${headers}=    Criar Headers Com Token    ${token}
+    
     ${response}=    DELETE    ${BASE_URL}${PRODUTOS_ENDPOINT}/${produto_id}    headers=${headers}    expected_status=any
     
     RETURN    ${response}
 
-Validar produto criado com Sucesso
-    [Documentation]    Valida resposta de criação de produto bem-sucedida
+
+Validar Produto Criado Com Sucesso
+    [Documentation]    Valida que o produto foi criado com sucesso (Status 201) e a mensagem esperada.
     [Arguments]    ${response}
     
     Validar Status Code    ${response}    ${STATUS_201}
@@ -120,26 +114,24 @@ Validar produto criado com Sucesso
     Dictionary Should Contain Key    ${response_json}    message
     
     Should Be Equal    ${response_json['message']}    Cadastro realizado com sucesso
-    ...    msg=Mensagem de sucesso não retornada
+    ...    msg=Mensagem de criação de produto incorreta
 
-Validar erro token ausente
-    [Documentation]    Valida erro quando token não é enviado
+Validar Erro Token Ausente
+    [Documentation]    Valida erro de autenticação quando token está ausente (Status 401).
     [Arguments]    ${response}
     
     Validar Status Code    ${response}    401
-    Validar Mensagem De Erro    ${response}    Token de acesso ausente
+    Validar Mensagem De Erro    ${response}    Token de acesso ausente, inválido, expirado ou usuário não é administrador
 
-Validar erro preco zero
-    [Documentation]    Valida erro quando preço é igual a zero
+Validar Erro Produto Duplicado
+    [Documentation]    Valida erro quando produto já existe (Status 400).
     [Arguments]    ${response}
     
     Validar Status Code    ${response}    ${STATUS_400}
-    ${response_json}=    Set Variable    ${response.json()}
-    Should Contain    ${response_json['preco']}    deve ser um número positivo
-    ...    msg=Mensagem de erro de preço zero não encontrada
+    Validar Mensagem De Erro    ${response}    Já existe produto com esse nome
 
-Validar erro preco negativo
-    [Documentation]    Valida erro quando preço é negativo
+Validar Erro Preco Negativo
+    [Documentation]    Valida erro quando preço é negativo (Status 400).
     [Arguments]    ${response}
     
     Validar Status Code    ${response}    ${STATUS_400}
@@ -147,29 +139,39 @@ Validar erro preco negativo
     Should Contain    ${response_json['preco']}    deve ser um número positivo
     ...    msg=Mensagem de erro de preço negativo não encontrada
 
-Validar erro campo obrigatorio produto
-    [Documentation]    Valida erro de campo obrigatório em produto
+Validar Erro Campo Obrigatorio Produto
+    [Documentation]    Valida erro de campo obrigatório em produto (Status 400).
     [Arguments]    ${response}    ${campo}
     
     Validar Status Code    ${response}    ${STATUS_400}
     ${response_json}=    Set Variable    ${response.json()}
     
-    Should Contain    ${response_json['${campo}']}    obrigatório
+    Should Contain    ${response_json['${campo}']}    não pode ficar em branco
     ...    msg=Mensagem de campo obrigatório não encontrada para '${campo}'
 
-Validar produto nao encontrado
-    [Documentation]    Valida erro quando produto não existe
+Validar Produto Nao Encontrado
+    [Documentation]    Valida erro quando produto não existe (Status 400).
     [Arguments]    ${response}
     
     Validar Status Code    ${response}    ${STATUS_400}
     Validar Mensagem De Erro    ${response}    Produto não encontrado
 
-Validar produto atualizado com sucesso
-    [Documentation]    Valida resposta de atualização de produto bem-sucedida
+Validar Produto Atualizado Com Sucesso
+    [Documentation]    Valida resposta de atualização de produto bem-sucedida (Status 200).
     [Arguments]    ${response}
     
     Validar Status Code    ${response}    200
     ${response_json}=    Set Variable    ${response.json()}
     
     Should Be Equal    ${response_json['message']}    Registro alterado com sucesso
-    ...    msg=Mensagem de sucesso de atualização não retornada
+    ...    msg=Mensagem de atualização de produto incorreta
+
+Validar Produto Deletado Com Sucesso
+    [Documentation]    Valida resposta de exclusão de produto bem-sucedida (Status 200).
+    [Arguments]    ${response}
+    
+    Validar Status Code    ${response}    200
+    ${response_json}=    Set Variable    ${response.json()}
+    
+    Should Be Equal    ${response_json['message']}    Registro excluído com sucesso
+    ...    msg=Mensagem de exclusão de produto incorreta

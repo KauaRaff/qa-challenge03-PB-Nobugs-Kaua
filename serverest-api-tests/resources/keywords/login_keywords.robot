@@ -4,11 +4,28 @@ Library          RequestsLibrary
 Library          Collections
 Resource         ../variables.robot
 Resource         ../base_setup.robot
+Resource         usuarios_keywords.robot
 
 *** Variables ***
 ${TOKEN}        ${EMPTY}
 
 *** Keywords ***
+Garantir Admin Existe e Logar
+    [Documentation]    Garante que o usuário admin exista e realiza o login
+    
+    # 1. Tenta criar o admin
+    ${body}=    Create Dictionary
+    ...    nome=${ADMIN_NOME}
+    ...    email=${ADMIN_EMAIL}
+    ...    password=${ADMIN_PASSWORD}
+    ...    administrador=true
+    
+    ${response}=    POST    ${BASE_URL}${USUARIOS_ENDPOINT}    json=${body}    expected_status=any
+    
+    
+    ${token}=    Realizar Login Como Admin
+    RETURN    ${token}
+
 Realizar Login Como Admin
     [Documentation]    Realiza login com usuário administrador e retorna token
     ${body}=    Create Dictionary
@@ -78,5 +95,7 @@ Validar Campo Obrigatorio Login
     Validar Status Code    ${response}    ${STATUS_400}
     ${response_json}=    Set Variable    ${response.json()}
     
-    Should Contain    ${response_json['${campo}']}    é obrigatório
-    ...    msg=Mensagem de campo obrigatório não encontrada para '${campo}'
+    # A ServeRest usa o nome do campo como chave para o erro
+    Dictionary Should Contain Key    ${response_json}    ${campo}
+    Should Contain    ${response_json['${campo}']}    não pode ficar em branco
+    ...    msg=Mensagem de campo obrigatório não encontrada
