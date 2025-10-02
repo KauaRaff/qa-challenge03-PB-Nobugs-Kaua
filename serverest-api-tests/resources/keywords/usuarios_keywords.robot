@@ -4,7 +4,6 @@ Library          RequestsLibrary
 Library          Collections
 Resource         ../variables.robot
 Resource         ../base_setup.robot
-Resource         login_keywords.robot
 
 *** Keywords ***
 Criar usuario valido
@@ -14,22 +13,11 @@ Criar usuario valido
     ${email}=    Gerar Email Aleatorio
     ${nome}=     Gerar Nome Aleatorio
     
-    ${body}=    Create Dictionary
-    ...    nome=${nome}
-    ...    email=${email}
-    ...    password=teste123
-    ...    administrador=${admin}
+    ${response}=    Criar usuario com dados    ${nome}    ${email}    teste123    ${admin}
     
-    ${response}=    POST    ${BASE_URL}${USUARIOS_ENDPOINT}    json=${body}    expected_status=201
+    Validar Usuario Criado Com Sucesso    ${response}
     
-    Validar Status Code    ${response}    ${STATUS_201}
-    ${response_json}=    Set Variable    ${response.json()}
-    
-    Dictionary Should Contain Key    ${response_json}    _id
-    ...    msg=ID do usuário não retornado
-    
-    ${user_id}=    Set Variable    ${response_json['_id']}
-    
+    ${user_id}=    Set Variable    ${response.json()['_id']}
     Log    Usuário criado com sucesso. ID: ${user_id}
     RETURN    ${user_id}    ${email}    ${nome}
 
@@ -47,46 +35,8 @@ Criar usuario com dados
     
     RETURN    ${response}
 
-Buscar usuario por ID
-    [Documentation]    Busca usuário específico por ID
-    [Arguments]    ${user_id}
-    
-    ${response}=    GET    ${BASE_URL}${USUARIOS_ENDPOINT}/${user_id}    expected_status=any
-    
-    RETURN    ${response}
-
-Listar todos usuarios
-    [Documentation]    Lista todos os usuários cadastrados
-    
-    ${response}=    GET    ${BASE_URL}${USUARIOS_ENDPOINT}    expected_status=200
-    
-    Validar Status Code    ${response}    ${STATUS_200}
-    RETURN    ${response}
-
-Atualizar Usuario
-    [Documentation]    Atualiza dados de um usuário existente
-    [Arguments]    ${user_id}    ${nome}    ${email}    ${password}    ${admin}=false
-    
-    ${body}=    Create Dictionary
-    ...    nome=${nome}
-    ...    email=${email}
-    ...    password=${password}
-    ...    administrador=${admin}
-    
-    ${response}=    PUT    ${BASE_URL}${USUARIOS_ENDPOINT}/${user_id}    json=${body}    expected_status=any
-    
-    RETURN    ${response}
-
-Deletar usuario
-    [Documentation]    Deleta um usuário por ID
-    [Arguments]    ${user_id}
-    
-    ${response}=    DELETE    ${BASE_URL}${USUARIOS_ENDPOINT}/${user_id}    expected_status=any
-    
-    RETURN    ${response}
-
-Validar usuario criado com sucesso
-     [Documentation]    Valida resposta de criação de usuário bem-sucedida
+Validar Usuario Criado Com Sucesso
+    [Documentation]    Valida resposta de criação de usuário bem-sucedida
     [Arguments]    ${response}
     
     Validar Status Code    ${response}    ${STATUS_201}
@@ -105,7 +55,7 @@ Validar erro campo obrigatorio usuario
     Validar Status Code    ${response}    ${STATUS_400}
     ${response_json}=    Set Variable    ${response.json()}
     
-    Should Contain    ${response_json['${campo}']}    obrigatório
+    Should Contain    ${response_json['${campo}']}    não pode ficar em branco
     ...    msg=Mensagem de campo obrigatório não encontrada para '${campo}'
 
 Validar email invalido
@@ -116,10 +66,23 @@ Validar email invalido
     Validar Mensagem De Erro    ${response}    email deve ser um email válido
 
 Validar usuario nao encontrado
-     [Documentation]    Valida erro quando usuário não existe
+    [Documentation]    Valida erro quando usuário não existe
     [Arguments]    ${response}
     
     Validar Status Code    ${response}    ${STATUS_400}
     Validar Mensagem De Erro    ${response}    Usuário não encontrado
 
+Validar usuario com email ja cadastrado
+    [Documentation]    Valida erro quando email já existe
+    [Arguments]    ${response}
     
+    Validar Status Code    ${response}    ${STATUS_400}
+    Validar Mensagem De Erro    ${response}    Este email já está sendo usado
+
+Buscar Usuario Por ID
+    [Documentation]    Busca um usuário pelo ID.
+    [Arguments]    ${user_id}
+    
+    ${response}=    GET    ${BASE_URL}${USUARIOS_ENDPOINT}/${user_id}    expected_status=any
+    
+    RETURN    ${response}
