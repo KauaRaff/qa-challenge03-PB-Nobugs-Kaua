@@ -63,12 +63,18 @@ Listar todos usuarios
     Validar Status Code    ${response}    ${STATUS_200}
     RETURN    ${response}
 
-Atualizar usuario
-    [Documentation]    Lista todos os usuários cadastrados
+Atualizar Usuario
+    [Documentation]    Atualiza dados de um usuário existente
+    [Arguments]    ${user_id}    ${nome}    ${email}    ${password}    ${admin}=false
     
-    ${response}=    GET    ${BASE_URL}${USUARIOS_ENDPOINT}    expected_status=200
+    ${body}=    Create Dictionary
+    ...    nome=${nome}
+    ...    email=${email}
+    ...    password=${password}
+    ...    administrador=${admin}
     
-    Validar Status Code    ${response}    ${STATUS_200}
+    ${response}=    PUT    ${BASE_URL}${USUARIOS_ENDPOINT}/${user_id}    json=${body}    expected_status=any
+    
     RETURN    ${response}
 
 Deletar usuario
